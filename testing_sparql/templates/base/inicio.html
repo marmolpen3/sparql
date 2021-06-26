@@ -1,6 +1,11 @@
 {% extends 'base/base.html' %}
 
-
 {% block content %}
-<h1>BIENVENIDO</h1>
+<div class="row">
+    <div class="col-12 text-center">
+        <h1>BIENVENIDO</h1>
+        <h3>Esta aplicación va a permitirte buscar información sobre cantantes y sobre sus canciones</h3>
+        <a href="{% url 'buscar_cantantes' %}" class="btn btn-primary mt-3">Comenzar</a>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<input id="lista-cantantes" type="hidden" value="{{resultado}}">
+<div class="row">
+    <div class="col-12 text-center">
+        <h3>Nombre o apellido del cantante</h3>
+        <form action="{% url 'buscar_cantantes' %}" method="post" class="row mt-3">
+            {% csrf_token %}
+            <div class="col-8 offset-2 col-lg-4 offset-lg-4">
+            {{form.cantante}}
+            </div>
+            <div class="col-4 offset-4">
+                <input class="btn btn-primary my-4" type="submit" value="Enviar">
+            </div>
+        </form>
+        <div id="cantantes">
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/base.js' %}"></script>
+{% endblock %}
