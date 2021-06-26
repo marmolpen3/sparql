@@ -1,6 +1,18 @@
 {% extends 'base/base.html' %}
+{% load static %}
 
 {% block content %}
-{{nombre}}
-{{resultado}}
+<input id="cantante" type="hidden" value="{{nombre}}">
+<input id="informacion-cantante" type="hidden" value="{{resultado}}">
+<div class="row">
+    <div class="col-12 text-center">
+        <div class="card">
+            <div id="mostar-info-cantante" class="card-body">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/perfil.js' %}"></script>
 {% endblock %}

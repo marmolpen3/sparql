@@ -63,6 +63,6 @@ class PerfilCantanteView(TemplateView):
                     lista.append(r["hasValue"]["value"])
             if "property/genre" in r["property"]["value"]:
                 lista.append(r["hasValue"]["value"])
-        context['resultado'] = lista
+        context['resultado'] = json.dumps(lista)
         return context
 
