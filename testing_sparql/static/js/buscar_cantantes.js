@@ -8,7 +8,7 @@ $(document).ready(function () {
         $("#cantantes").append('<p>No se han encontrado cantantes con ese nombre</p>');
     } else {
         for (cantante of listaCantantes) {
-            $("#cantantes").append('<a href="/cantante/'+cantante.replace(/\s+/g, '_')+'/" class="btn btn-primary m-3">'+cantante+'</a>');
+            $("#cantantes").append('<li class="list-group-item"><a href="/cantante/'+cantante.replace(/\s+/g, '_')+'/" class="text-decoration-none">'+cantante+'</a></li>');
         }
     }
 });

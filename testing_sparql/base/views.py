@@ -15,22 +15,26 @@ class BuscarCantantesView(FormView):
     def form_valid(self, form, **kwargs):
         context = self.get_context_data(request=self.request, form=form)
         cantante_insertado = string.capwords(form.cleaned_data.get('cantante'))
-        sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-        sparql.setQuery("""
+        consulta = SPARQLWrapper("http://dbpedia.org/sparql")
+        consulta.setQuery("""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX dbo: <http://dbpedia.org/ontology/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX dbp: <http://dbpedia.org/property/>
 
-            SELECT DISTINCT *
+            SELECT DISTINCT ?etiqueta
             WHERE {
-            ?cantante rdf:type dbo:MusicalArtist;
-            rdfs:label ?etiqueta.
-            FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")).
+                ?cantante rdf:type dbo:MusicalArtist;
+                rdfs:label ?etiqueta .
+                FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")) .
             }
         """)
-        sparql.setReturnFormat(JSON)
-        resultado = sparql.query().convert()
+            # UNION
+            #     { ?cantante rdf:type dbo:Band;
+            #     rdfs:label ?etiqueta .
+            #     FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")) . }
+        consulta.setReturnFormat(JSON)
+        resultado = consulta.query().convert()
         lista = []
         for r in resultado["results"]["bindings"]:
             lista.append(r["etiqueta"]["value"])
@@ -43,28 +47,47 @@ class PerfilCantanteView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cantante_nombre = kwargs['cantante_nombre']
-        print(cantante_nombre)
-        context['nombre'] = cantante_nombre
-        sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-        sparql.setQuery("""
+        consulta = SPARQLWrapper("http://dbpedia.org/sparql")
+        consulta.setQuery("""
+            PREFIX dbo: <http://dbpedia.org/ontology/>
             PREFIX dbr: <http://dbpedia.org/resource/>
+            PREFIX dbp: <http://dbpedia.org/property/>
 
-            SELECT ?property ?hasValue ?isValueOf
+            SELECT ?nombreGenero ?info ?ocupacion ?nombreCancion
             WHERE {
-            { dbr:"""+cantante_nombre+""" ?property ?hasValue }
+                { dbr:"""+cantante_nombre+""" dbo:abstract ?info .
+                FILTER (LANGMATCHES(LANG(?info ), "en")). }
             UNION
-            { ?isValueOf ?property dbr:"""+cantante_nombre+""" }
+                { dbr:"""+cantante_nombre+""" dbp:genre ?genero .
+                  ?genero dbp:name ?nombreGenero . }
+            UNION
+                { dbr:"""+cantante_nombre+""" dbp:occupation ?ocupacion . }
+            UNION
+                { ?canciones dbp:artist dbr:"""+cantante_nombre+""" ;
+                    rdf:type dbo:Song ;
+                    dbp:name ?nombreCancion. }
             }
         """)
-        sparql.setReturnFormat(JSON)
-        resultado = sparql.query().convert()
-        lista = []
-        for r in resultado["results"]["bindings"]:
-            if "abstract" in r["property"]["value"]:
-                if r["hasValue"]["xml:lang"] == 'es':
-                    lista.append(r["hasValue"]["value"])
-            if "property/genre" in r["property"]["value"]:
-                lista.append(r["hasValue"]["value"])
-        context['resultado'] = json.dumps(lista)
-        return context
+        consulta.setReturnFormat(JSON)
+        resultado = consulta.query().convert()
+        datos = {}
+        datos['nombreGenero'] = []
+        datos['ocupacion'] = []
+        datos['nombreCancion'] = []
 
+        for r in resultado['results']['bindings']:
+            print(r)
+            for k, v in r.items():
+                if k == 'info':
+                    datos['info'] = v['value']
+                if k == 'nombreGenero':
+                    datos['nombreGenero'].append(v['value'])
+                if k == 'ocupacion':
+                    datos['ocupacion'].append(v['value'])
+                if k == 'nombreCancion':
+                    datos['nombreCancion'].append(v['value'])
+
+        context['nombre'] = cantante_nombre
+        context['resultado'] = json.dumps(datos)
+
+        return context
