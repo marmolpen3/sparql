@@ -1,1 +1,5 @@
+Django<3
 sparqlwrapper
+beautifulsoup4
+lxml
+helium

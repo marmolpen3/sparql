@@ -1,4 +1,6 @@
 import json, string
+from bs4 import BeautifulSoup
+from helium import *
 from django.shortcuts import render
 from django.views.generic import TemplateView, FormView
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -37,7 +39,8 @@ class BuscarCantantesView(FormView):
         resultado = consulta.query().convert()
         lista = []
         for r in resultado["results"]["bindings"]:
-            lista.append(r["etiqueta"]["value"])
+            if 'song)' not in r["etiqueta"]["value"]:
+                lista.append(r["etiqueta"]["value"])
         context['resultado'] = json.dumps(lista)
         return self.render_to_response(context)
 
@@ -90,7 +93,6 @@ class PerfilCantanteView(TemplateView):
         datos['nombreCancion'] = []
 
         for r in resultado['results']['bindings']:
-            print(r)
             for k, v in r.items():
                 if k == 'nombreGenero':
                     datos['nombreGenero'].append(v['value'])
@@ -109,5 +111,25 @@ class PerfilCantanteView(TemplateView):
 
         context['nombre'] = cantante_nombre
         context['resultado'] = json.dumps(datos)
+        context['img_cantante'] = obtener_imagen(cantante_nombre)
 
         return context
+
+
+def obtener_imagen(nombre):
+    url = 'https://www.gettyimages.es/editorial-images'
+    browser = start_chrome(url, headless=True)
+    nombre = nombre.replace("_", " ")
+    print(nombre)
+    write(nombre, into="Busca las mejores fotos editoriales")
+    press(ENTER)
+
+    pagina_buscador = BeautifulSoup(browser.page_source, "lxml")
+    url_resultado = pagina_buscador.find("div", class_="search-content__gallery-assets").find("div", class_="gallery-mosaic-asset").find("article", class_="gallery-mosaic-asset__container").a.get('href')
+
+    go_to("https://www.gettyimages.es"+url_resultado)
+    pagina_resultado = BeautifulSoup(browser.page_source, "lxml")
+    img_url = pagina_resultado.find("img", class_="asset-card__image").get('src')
+    print(img_url)
+
+    return img_url

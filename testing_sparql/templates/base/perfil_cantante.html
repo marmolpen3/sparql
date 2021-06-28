@@ -3,9 +3,10 @@
 
 {% block content %}
 <input id="cantante" type="hidden" value="{{nombre}}">
+<input id="img-cantante" type="hidden" value="{{img_cantante}}">
 <input id="informacion-cantante" type="hidden" value="{{resultado}}">
 <div class="row mt-3">
-    <div class="col-12 text-center">
+    <div class="col-8 offset-2 text-center">
         <div class="card">
             <div id="mostar-info-cantante" class="card-body">
             </div>
@@ -13,7 +14,7 @@
     </div>
 </div>
 <div class="row my-4">
-    <div class="col-12 text-center">
+    <div class="col-8 offset-2 text-center">
         <div id="mas-info-card" class="card d-none">
             <div id="mas-info" class="card-body">
             </div>
