@@ -24,15 +24,15 @@ class BuscarCantantesView(FormView):
 
             SELECT DISTINCT ?etiqueta
             WHERE {
-                ?cantante rdf:type dbo:MusicalArtist;
-                rdfs:label ?etiqueta .
-                FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")) .
+                { ?cantante rdf:type dbo:MusicalArtist;
+                   rdfs:label ?etiqueta .
+                   FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")) . }
+                UNION
+                { ?cantante rdf:type dbo:Band;
+                   rdfs:label ?etiqueta .
+                   FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")) . }
             }
         """)
-            # UNION
-            #     { ?cantante rdf:type dbo:Band;
-            #     rdfs:label ?etiqueta .
-            #     FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")) . }
         consulta.setReturnFormat(JSON)
         resultado = consulta.query().convert()
         lista = []
@@ -50,40 +50,60 @@ class PerfilCantanteView(TemplateView):
         consulta = SPARQLWrapper("http://dbpedia.org/sparql")
         consulta.setQuery("""
             PREFIX dbo: <http://dbpedia.org/ontology/>
-            PREFIX dbr: <http://dbpedia.org/resource/>
             PREFIX dbp: <http://dbpedia.org/property/>
 
-            SELECT ?nombreGenero ?info ?ocupacion ?nombreCancion
+            SELECT ?nombreGenero ?info ?nombreOcupacion ?pagWeb ?nombreNominacion ?infoNominacion ?nombreCancion
             WHERE {
-                { dbr:"""+cantante_nombre+""" dbo:abstract ?info .
-                FILTER (LANGMATCHES(LANG(?info ), "en")). }
+                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbo:abstract ?info .
+                   FILTER (LANGMATCHES(LANG(?info ), "en")). }
             UNION
-                { dbr:"""+cantante_nombre+""" dbp:genre ?genero .
-                  ?genero dbp:name ?nombreGenero . }
+                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbo:genre ?genero .
+                   ?genero rdfs:label ?nombreGenero .
+                   FILTER (LANGMATCHES(LANG(?nombreGenero ), "en")) .}
             UNION
-                { dbr:"""+cantante_nombre+""" dbp:occupation ?ocupacion . }
+                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?nombreOcupacion . }
             UNION
-                { ?canciones dbp:artist dbr:"""+cantante_nombre+""" ;
-                    rdf:type dbo:Song ;
-                    dbp:name ?nombreCancion. }
+                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> foaf:homepage ?pagWeb . }
+            UNION
+                { ?nominacion dbp:mostNominations <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
+                   rdfs:label ?nombreNominacion ;
+                   dbo:abstract ?infoNominacion .
+                   FILTER (LANGMATCHES(LANG(?infoNominacion), "en") && LANGMATCHES(LANG(?nombreNominacion), "en")) .}
+            UNION
+                { ?canciones dbp:artist <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
+                   rdf:type dbo:Song ;
+                   rdfs:label ?nombreCancion .
+                   FILTER (LANGMATCHES(LANG(?nombreCancion), "en")) . }
             }
         """)
+        # { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?ocupacion .
+        #           ?ocupacion rdfs:label ?nombreOcupacion .
+        #            FILTER (LANGMATCHES(LANG(?nombreOcupacion ), "en")) . }
         consulta.setReturnFormat(JSON)
         resultado = consulta.query().convert()
         datos = {}
         datos['nombreGenero'] = []
-        datos['ocupacion'] = []
+        datos['nombreOcupacion'] = []
+        datos['nominaciones'] = {}
+        datos['nominaciones']['nombre'] = []
+        datos['nominaciones']['info'] = []
         datos['nombreCancion'] = []
 
         for r in resultado['results']['bindings']:
             print(r)
             for k, v in r.items():
-                if k == 'info':
-                    datos['info'] = v['value']
                 if k == 'nombreGenero':
                     datos['nombreGenero'].append(v['value'])
-                if k == 'ocupacion':
-                    datos['ocupacion'].append(v['value'])
+                if k == 'info':
+                    datos['info'] = v['value']
+                if k == 'nombreOcupacion':
+                    datos['nombreOcupacion'].append(v['value'])
+                if k == 'pagWeb':
+                    datos['pagWeb'] = v['value']
+                if k == 'nombreNominacion':
+                    datos['nominaciones']['nombre'].append(v['value'])
+                if k == 'infoNominacion':
+                    datos['nominaciones']['info'].append(v['value'])
                 if k == 'nombreCancion':
                     datos['nombreCancion'].append(v['value'])
 
