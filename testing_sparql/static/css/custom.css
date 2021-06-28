@@ -1,0 +1,40 @@
+body, html {
+    background-color: black;
+    height: 100%;
+    margin: 0;
+  }
+
+.bg-inicio {
+    /* The image used */
+    background-image: url("../img/partitura.png");
+
+    /* Full height */
+    height: 100%;
+
+    /* Center and scale the image nicely */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.bg-cantantes {
+    /* The image used */
+    background-image: url("../img/concierto_colores.png");
+
+    /* Full height */
+    height: 100%;
+
+    /* Center and scale the image nicely */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.padding-center-inicio {
+    padding-top: 23rem;
+}
+
+.padding-center-buscar {
+    padding-top: 15rem;
+}
+

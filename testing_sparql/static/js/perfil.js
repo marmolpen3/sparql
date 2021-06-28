@@ -6,7 +6,7 @@ $(document).ready(function () {
     $("#mostar-info-cantante").append('<h1 class="my-2">'+cantante+'</h1>');
     $("#mostar-info-cantante").append('<img src="'+imgCantante+'" class="img-fluid img-thumbnail w-50 my-2"></img>');
     if(datos['nombreGenero'].length == 0 && datos['info'] == null){
-        $("#mostar-info-cantante").append('<p class="mt-3">We have not been able to obtain information about this artist. Sorry :(</p>');
+        $("#mostar-info-cantante").append('<p class="mt-3">We could not find any information about this artist. Sorry :(</p>');
     }
     $("#mas-info").append('<h4 class="my-2">More information about '+cantante+'</h4>');
     Object.entries(datos).forEach(([k,v]) => {

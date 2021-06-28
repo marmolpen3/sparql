@@ -1,11 +1,16 @@
 {% extends 'base/base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12 text-center">
-        <h1>WELCOME</h1>
-        <h3>Here you will find information about your favourite artists</h3>
-        <a href="{% url 'buscar_cantantes' %}" class="btn btn-primary mt-3">Let's start!</a>
+<div class="bg-inicio">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center text-light padding-center-inicio">
+                <h1>WELCOME</h1>
+                <h3>Here you will find information about your favourite artists</h3>
+                <a href="{% url 'buscar_cantantes' %}" class="btn btn-primary mt-3">Let's start!</a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

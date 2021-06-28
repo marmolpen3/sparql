@@ -66,6 +66,10 @@ class PerfilCantanteView(TemplateView):
             UNION
                 { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?nombreOcupacion . }
             UNION
+                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?ocupacion .
+                   ?ocupacion rdfs:label ?nombreOcupacion .
+                   FILTER (LANGMATCHES(LANG(?nombreOcupacion ), "en")) . }
+            UNION
                 { <http://dbpedia.org/resource/"""+cantante_nombre+"""> foaf:homepage ?pagWeb . }
             UNION
                 { ?nominacion dbp:mostNominations <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
@@ -79,9 +83,6 @@ class PerfilCantanteView(TemplateView):
                    FILTER (LANGMATCHES(LANG(?nombreCancion), "en")) . }
             }
         """)
-        # { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?ocupacion .
-        #           ?ocupacion rdfs:label ?nombreOcupacion .
-        #            FILTER (LANGMATCHES(LANG(?nombreOcupacion ), "en")) . }
         consulta.setReturnFormat(JSON)
         resultado = consulta.query().convert()
         datos = {}
@@ -120,7 +121,8 @@ def obtener_imagen(nombre):
     url = 'https://www.gettyimages.es/editorial-images'
     browser = start_chrome(url, headless=True)
     nombre = nombre.replace("_", " ")
-    print(nombre)
+    if "(singer)" in nombre:
+        nombre = nombre[:-9]
     write(nombre, into="Busca las mejores fotos editoriales")
     press(ENTER)
 
