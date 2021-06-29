@@ -49,7 +49,11 @@ $(document).ready(function () {
                 }
                 if(k == 'info' && v.length != 0 ){
                     $("#mas-info-card").removeClass("d-none");
-                    $("#mas-info").append('<p class="text-start mb-4">'+v+'</p>');
+                    $("#mas-info").append('<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-info" aria-expanded="false" aria-controls="collapse-info">Show more about these awards</button>');
+                    $("#mas-info").append('<div class="collapse" id="collapse-info"><div id="awards-info" class="card card-body mt-3"></div></div>');
+                    for (i of v) {
+                        $("#awards-info").append('<p class="text-start mb-4"><i class="bi bi-arrow-right-circle"></i> '+i+'</p>');
+                    }
                 }
             });
         }
