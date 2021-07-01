@@ -34,6 +34,7 @@ class BuscarCantantesView(FormView):
                    rdfs:label ?etiqueta .
                    FILTER(REGEX(str(?etiqueta), """+'"'+cantante_insertado+'"'+""") && LANGMATCHES(LANG(?etiqueta), "en")) . }
             }
+            ORDER BY ?etiqueta
         """)
         consulta.setReturnFormat(JSON)
         resultado = consulta.query().convert()
@@ -55,32 +56,35 @@ class PerfilCantanteView(TemplateView):
             PREFIX dbo: <http://dbpedia.org/ontology/>
             PREFIX dbp: <http://dbpedia.org/property/>
 
-            SELECT ?nombreGenero ?info ?nombreOcupacion ?pagWeb ?nombreNominacion ?infoNominacion ?nombreCancion
+            SELECT ?info ?nombreGenero ?nombreOcupacion ?pagWeb ?nombreNominacion ?infoNominacion ?nombreCancion ?nombreAlbum ?cancionAlbum
             WHERE {
-                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbo:abstract ?info .
-                   FILTER (LANGMATCHES(LANG(?info ), "en")). }
+                {   <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbo:abstract ?info .
+                    FILTER (LANGMATCHES(LANG(?info ), "en")) . }
             UNION
-                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbo:genre ?genero .
-                   ?genero rdfs:label ?nombreGenero .
-                   FILTER (LANGMATCHES(LANG(?nombreGenero ), "en")) .}
+                {   <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbo:genre ?genero .
+                    ?genero rdfs:label ?nombreGenero .
+                    FILTER (LANGMATCHES(LANG(?nombreGenero ), "en")) . }
             UNION
-                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?nombreOcupacion . }
+                {   <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?nombreOcupacion . }
             UNION
-                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> dbp:occupation ?ocupacion .
-                   ?ocupacion rdfs:label ?nombreOcupacion .
-                   FILTER (LANGMATCHES(LANG(?nombreOcupacion ), "en")) . }
+                {   <http://dbpedia.org/resource/"""+cantante_nombre+"""> foaf:homepage ?pagWeb . }
             UNION
-                { <http://dbpedia.org/resource/"""+cantante_nombre+"""> foaf:homepage ?pagWeb . }
+                {   ?nominacion dbp:mostNominations <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
+                    rdfs:label ?nombreNominacion ;
+                    dbo:abstract ?infoNominacion .
+                    FILTER (LANGMATCHES(LANG(?infoNominacion), "en") && LANGMATCHES(LANG(?nombreNominacion), "en")) . }
             UNION
-                { ?nominacion dbp:mostNominations <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
-                   rdfs:label ?nombreNominacion ;
-                   dbo:abstract ?infoNominacion .
-                   FILTER (LANGMATCHES(LANG(?infoNominacion), "en") && LANGMATCHES(LANG(?nombreNominacion), "en")) .}
+                {   ?canciones dbp:artist <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
+                    rdf:type dbo:Song ;
+                    rdfs:label ?nombreCancion .
+                    FILTER (LANGMATCHES(LANG(?nombreCancion), "en")) . }
             UNION
-                { ?canciones dbp:artist <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
-                   rdf:type dbo:Song ;
-                   rdfs:label ?nombreCancion .
-                   FILTER (LANGMATCHES(LANG(?nombreCancion), "en")) . }
+                {
+                    ?albumes dbp:artist <http://dbpedia.org/resource/"""+cantante_nombre+"""> ;
+                    rdf:type dbo:Album ;
+                    dbp:title ?cancionAlbum .
+                    ?albumes rdfs:label ?nombreAlbum .
+                    FILTER (LANGMATCHES(LANG(?nombreAlbum), "en")) . }
             }
         """)
         consulta.setReturnFormat(JSON)
@@ -92,7 +96,9 @@ class PerfilCantanteView(TemplateView):
         datos['nominaciones']['nombre'] = []
         datos['nominaciones']['info'] = []
         datos['nombreCancion'] = []
+        datos['albumes'] = []
 
+        i=0
         for r in resultado['results']['bindings']:
             for k, v in r.items():
                 if k == 'nombreGenero':
@@ -100,6 +106,9 @@ class PerfilCantanteView(TemplateView):
                 if k == 'info':
                     datos['info'] = v['value']
                 if k == 'nombreOcupacion':
+                    if 'http://dbpedia.org/resource/' in v['value']:
+                        ocupacion = v['value'][28:].replace("_", " ")
+                        datos['nombreOcupacion'].append(ocupacion)
                     datos['nombreOcupacion'].append(v['value'])
                 if k == 'pagWeb':
                     datos['pagWeb'] = v['value']
@@ -109,6 +118,18 @@ class PerfilCantanteView(TemplateView):
                     datos['nominaciones']['info'].append(v['value'])
                 if k == 'nombreCancion':
                     datos['nombreCancion'].append(v['value'])
+                if k == 'nombreAlbum':
+                    datos['cancionAlbum'+str(i)] = {}
+                    if v['value'] not in datos['albumes']:
+                        datos['albumes'].append(v['value'])
+                    datos['cancionAlbum'+str(i)]['album']=v['value']
+                if k == 'cancionAlbum':
+                    if 'http://dbpedia.org/resource/' in v['value']:
+                        cancion = v['value'][28:].replace("_", " ")
+                        datos['cancionAlbum'+str(i)]['cancion']=cancion
+                    else:
+                        datos['cancionAlbum'+str(i)]['cancion']=v['value']
+                    i+=1
 
         context['nombre'] = cantante_nombre
         context['resultado'] = json.dumps(datos)
@@ -132,6 +153,6 @@ def obtener_imagen(nombre):
     go_to("https://www.gettyimages.es"+url_resultado)
     pagina_resultado = BeautifulSoup(browser.page_source, "lxml")
     img_url = pagina_resultado.find("img", class_="asset-card__image").get('src')
-    print(img_url)
+    kill_browser()
 
     return img_url
